@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toxic Dota Save</title>
+<style>
+:root{
+  --bg:#0b0d10; --bg2:#101318;
+  --panel:#15181d; --panel2:#1b1f25; --line:#262b33; --line2:#323843;
+  --text:#dfe3e8; --muted:#8b939e; --dim:#5d6570;
+  --red:#d2412c; --red2:#8e2216; --gold:#c9a45a; --gold2:#7d6332;
+  --green:#5fae46; --green2:#2f6a24;
+  --radius:3px;
+  --font:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
+  --display:"Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font:13px/1.45 var(--font); color:var(--text); background:var(--bg);
+  overflow:hidden; user-select:none; -webkit-font-smoothing:antialiased;
+}
+body::before{ /* ember glow */
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(178,40,24,.22), transparent 60%),
+    radial-gradient(700px 380px at 105% 110%, rgba(201,164,90,.07), transparent 60%),
+    linear-gradient(180deg,#0e1014 0%, #0a0b0e 100%);
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+button:disabled{cursor:not-allowed}
+:focus-visible{outline:1px solid var(--gold);outline-offset:2px}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-thumb{background:#2a2f37;border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+
+.app{position:relative;z-index:1;display:grid;grid-template-rows:56px 1fr 30px;height:100%}
+
+/* ---------- header ---------- */
+header{
+  display:flex;align-items:center;gap:14px;padding:0 18px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(24,27,33,.92),rgba(14,16,20,.92));
+  box-shadow:0 1px 0 rgba(255,255,255,.02) inset, 0 8px 24px rgba(0,0,0,.35);
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:32px;height:32px;filter:drop-shadow(0 0 8px rgba(201,164,90,.3))}
+.brand b{font:700 15px var(--display);letter-spacing:.2em;text-transform:uppercase;
+  background:linear-gradient(180deg,#f2e2bd,#c9a45a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.status{display:flex;align-items:center;gap:8px;margin-left:8px;padding:5px 10px;
+  border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:20px;color:var(--muted);font-size:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim)}
+.dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(95,174,70,.18);animation:pulse 2.4s infinite}
+.dot.warn{background:var(--red);box-shadow:0 0 0 3px rgba(210,65,44,.2)}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(95,174,70,.05)}}
+.spacer{flex:1}
+.hbtn{display:flex;align-items:center;gap:7px;height:30px;padding:0 12px;border:1px solid var(--line2);
+  background:linear-gradient(180deg,#22262d,#181b20);border-radius:var(--radius);color:#c3c9d1;
+  font-size:12px;letter-spacing:.06em;text-transform:uppercase;transition:.15s}
+.hbtn:hover{border-color:#4a515d;color:#fff;background:linear-gradient(180deg,#2a2f37,#1d2026)}
+.hbtn svg{width:14px;height:14px}
+.help{position:relative}
+.help .pop{position:absolute;top:calc(100% + 10px);right:0;z-index:15;width:300px;padding:14px 16px 12px;
+  border:1px solid var(--line2);border-top:2px solid var(--gold);border-radius:var(--radius);
+  background:linear-gradient(180deg,#1f232a,#15181d);box-shadow:0 18px 40px rgba(0,0,0,.55);
+  opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .15s,transform .15s,visibility .15s;pointer-events:none}
+.help .pop::before{content:"";position:absolute;top:-12px;left:0;right:0;height:12px} /* hover bridge */
+.help:hover .pop,.help:focus-within .pop{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+.help .pop b{display:block;font:600 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.help ol{list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:6px}
+.help li{counter-increment:s;display:flex;gap:9px;font-size:12.5px;color:#c9ced5;line-height:1.4;text-transform:none;letter-spacing:0}
+.help li::before{content:counter(s);flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+  font-size:10.5px;font-weight:700;color:var(--gold);border:1px solid rgba(201,164,90,.4);background:rgba(201,164,90,.08)}
+.lang{display:flex;border:1px solid var(--line2);border-radius:var(--radius);overflow:hidden}
+.lang button{height:28px;padding:0 10px;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--muted)}
+.lang button.on{background:linear-gradient(180deg,#3a2a1a,#2a1d12);color:var(--gold)}
+
+/* ---------- layout ---------- */
+main{display:grid;grid-template-columns:290px 1fr;min-height:0}
+aside{border-right:1px solid var(--line);background:rgba(10,12,15,.55);display:flex;flex-direction:column;min-height:0}
+.sect{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px}
+.label{font:600 11px var(--display);letter-spacing:.18em;text-transform:uppercase;color:#9aa2ac}
+.label i{font-style:normal;color:var(--dim);margin-left:6px;letter-spacing:.05em}
+.accounts{overflow:auto;padding:0 10px 12px;display:flex;flex-direction:column;gap:4px}
+
+.acc{display:flex;align-items:center;gap:11px;padding:9px 10px;border:1px solid transparent;border-radius:var(--radius);
+  text-align:left;width:100%;position:relative;transition:background .15s,border-color .15s}
+.acc:hover{background:rgba(255,255,255,.03);border-color:var(--line)}
+.acc.sel{background:linear-gradient(90deg,rgba(201,164,90,.12),rgba(201,164,90,.02));border-color:rgba(201,164,90,.35)}
+.acc.sel::before{content:"";position:absolute;left:-1px;top:8px;bottom:8px;width:2px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.av{width:38px;height:38px;flex:none;border-radius:2px;background:#222 center/cover;position:relative;
+  display:grid;place-items:center;font:700 15px var(--display);color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset}
+.av.lg{width:76px;height:76px;font-size:28px;box-shadow:0 0 0 1px rgba(201,164,90,.5),0 0 0 4px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.5)}
+.av .live{position:absolute;right:-3px;bottom:-3px;width:11px;height:11px;border-radius:50%;background:var(--green);border:2px solid #0e1013}
+.acc .meta{min-width:0;flex:1}
+.acc .name{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc .sub{color:var(--muted);font-size:11.5px;display:flex;gap:6px;align-items:center;min-width:0}
+.acc .sub span.n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.acc .count{font-size:11px;color:var(--dim);min-width:18px;text-align:right}
+
+.tag{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border-radius:2px;
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;vertical-align:middle;white-space:nowrap}
+.tag.live{color:#a9e294;background:rgba(95,174,70,.14);border:1px solid rgba(95,174,70,.35)}
+.tag.recent{color:#c7cdd4;background:rgba(255,255,255,.06);border:1px solid var(--line2)}
+.tag.none{color:var(--dim);border:1px solid var(--line)}
+.tag.auto{color:var(--gold);background:rgba(201,164,90,.1);border:1px solid rgba(201,164,90,.3)}
+.tag.mine{color:#e9a294;background:rgba(210,65,44,.1);border:1px solid rgba(210,65,44,.3)}
+
+/* ---------- content ---------- */
+.content{overflow:auto;padding:22px 26px 26px;display:flex;flex-direction:column;gap:20px;min-height:0}
+.hero{display:flex;gap:20px;align-items:center;padding:20px 22px;border:1px solid var(--line);border-radius:var(--radius);position:relative;overflow:hidden;
+  background:linear-gradient(135deg,rgba(32,22,20,.9),rgba(20,22,27,.95) 45%,rgba(16,18,22,.95))}
+.hero::after{content:"";position:absolute;right:-60px;top:-80px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(210,65,44,.16),transparent 65%);pointer-events:none}
+.hero .who{flex:1;min-width:0}
+.hero h1{font:600 24px/1.2 var(--display);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero .sub{color:var(--muted);margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hero .act{display:flex;flex-direction:column;gap:8px;align-items:stretch;width:270px;position:relative;z-index:1}
+.note{height:34px;padding:0 11px;background:rgba(0,0,0,.35);border:1px solid var(--line2);border-radius:var(--radius);outline:none;transition:.15s;user-select:text}
+.note::placeholder{color:var(--dim)}
+.note:focus{border-color:var(--gold2);background:rgba(0,0,0,.5)}
+
+.play{ /* the big green button */
+  height:44px;display:flex;align-items:center;justify-content:center;gap:9px;border-radius:var(--radius);
+  font:700 14px var(--display);letter-spacing:.2em;text-transform:uppercase;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.6);
+  background:linear-gradient(180deg,#6fbe52 0%,#4d9638 48%,#3b7d2b 52%,#2f6a24 100%);
+  border:1px solid #2a5a20;box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 0 0 1px rgba(0,0,0,.4),0 6px 18px rgba(63,140,50,.25);
+  transition:filter .15s,transform .05s}
+.play:hover:not(:disabled){filter:brightness(1.12) saturate(1.1)}
+.play:active:not(:disabled){transform:translateY(1px)}
+.play:disabled{filter:grayscale(1) brightness(.55)}
+.play svg{width:17px;height:17px}
+.play.red{background:linear-gradient(180deg,#e45a3f 0%,#bb3a24 48%,#9c2c1a 52%,#842414 100%);border-color:#6a1a0e;box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 0 0 1px rgba(0,0,0,.4),0 6px 18px rgba(210,65,44,.25)}
+.hint{font-size:11.5px;color:var(--muted)}
+
+.banner{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:var(--radius);
+  border:1px solid rgba(210,65,44,.45);background:linear-gradient(90deg,rgba(210,65,44,.18),rgba(210,65,44,.04));color:#f1c2b8}
+.banner svg{width:18px;height:18px;flex:none;color:var(--red)}
+
+.bar{display:flex;align-items:center;gap:12px}
+.tabs{display:flex;gap:2px;margin-left:auto;padding:2px;border:1px solid var(--line);border-radius:var(--radius);background:rgba(0,0,0,.25)}
+.tabs button{height:24px;padding:0 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-radius:2px}
+.tabs button.on{background:#262b33;color:#fff}
+
+.list{display:flex;flex-direction:column;gap:6px}
+.bk{display:grid;grid-template-columns:4px 1fr auto;align-items:center;border:1px solid var(--line);border-radius:var(--radius);
+  background:linear-gradient(180deg,var(--panel2),var(--panel));transition:border-color .15s,transform .15s;overflow:hidden}
+.bk:hover{border-color:var(--line2)}
+.bk .stripe{align-self:stretch;background:linear-gradient(180deg,var(--red),var(--red2))}
+.bk.auto .stripe{background:linear-gradient(180deg,var(--gold),var(--gold2))}
+.bk .info{padding:11px 14px;min-width:0}
+.bk .t{font-weight:600;font-size:13.5px;display:flex;gap:8px;align-items:center;min-width:0}
+.bk .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk .s{color:var(--muted);font-size:11.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk .s b{color:#b8bec6;font-weight:500}
+.bk .ops{display:flex;gap:6px;padding-right:10px;align-items:center}
+.ibtn{width:30px;height:30px;display:grid;place-items:center;border-radius:var(--radius);color:var(--muted);border:1px solid transparent;transition:.15s}
+.ibtn:hover{color:#fff;border-color:var(--line2);background:rgba(255,255,255,.04)}
+.ibtn.del:hover{color:#ff9b8a;border-color:rgba(210,65,44,.45);background:rgba(210,65,44,.08)}
+.ibtn svg{width:15px;height:15px}
+.load{height:30px;padding:0 14px;display:flex;align-items:center;gap:7px;border-radius:var(--radius);
+  font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#e9f5e4;
+  background:linear-gradient(180deg,#3d7a2e,#2b5a21);border:1px solid #24491b;box-shadow:0 1px 0 rgba(255,255,255,.15) inset;transition:filter .15s}
+.load:hover:not(:disabled){filter:brightness(1.18)}
+.load:disabled{filter:grayscale(1) brightness(.6)}
+.load svg{width:13px;height:13px}
+
+.empty{padding:34px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line2);border-radius:var(--radius);background:rgba(0,0,0,.15)}
+.empty svg{width:34px;height:34px;color:var(--dim);margin-bottom:8px}
+.empty b{display:block;color:#c3c9d1;font-size:14px;margin-bottom:3px;font-weight:600}
+
+.fatal{display:grid;place-items:center;height:100%;text-align:center;padding:40px}
+.fatal > div{max-width:420px}
+.fatal h2{font:600 18px var(--display);margin:12px 0 6px}
+.fatal p{color:var(--muted)}
+
+/* ---------- footer ---------- */
+footer{display:flex;align-items:center;gap:14px;padding:0 18px;border-top:1px solid var(--line);font-size:11px;color:var(--dim);background:rgba(8,9,11,.7)}
+footer .credit{color:#9aa2ac;letter-spacing:.06em}
+footer .credit.link{cursor:pointer}
+footer .credit.link:hover{color:var(--gold)}
+footer .credit b{color:var(--gold);font-weight:600}
+
+/* ---------- modal ---------- */
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(3,4,6,.72);backdrop-filter:blur(3px);display:grid;place-items:center;animation:fade .15s}
+.modal{width:min(460px,calc(100% - 32px));border:1px solid var(--line2);border-radius:var(--radius);
+  background:linear-gradient(180deg,#1c2026,#13161a);box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.6);animation:rise .18s ease-out}
+.modal .mh{padding:16px 20px 12px;border-bottom:1px solid var(--line);font:600 13px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.modal .mb{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.modal .mf{padding:14px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line);background:rgba(0,0,0,.2)}
+.modal .mf .play{height:36px;padding:0 20px;font-size:12.5px}
+.ghost{height:36px;padding:0 16px;border:1px solid var(--line2);border-radius:var(--radius);color:#c3c9d1;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+.ghost:hover{border-color:#4a515d;color:#fff}
+.flow{display:grid;grid-template-columns:1fr 28px 1fr;align-items:center;gap:8px}
+.flow .box{border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:var(--radius);padding:10px 12px;min-width:0}
+.flow .box small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+.flow .box div{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flow svg{width:22px;height:22px;color:var(--gold);justify-self:center}
+.targets{display:flex;flex-direction:column;gap:4px;max-height:232px;overflow:auto}
+.targets .acc{padding:6px 8px}
+.targets .av{width:30px;height:30px;font-size:12px}
+.safe{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--muted);padding:10px 12px;border-radius:var(--radius);background:rgba(201,164,90,.06);border:1px solid rgba(201,164,90,.18)}
+.safe svg{width:16px;height:16px;color:var(--gold);flex:none;margin-top:1px}
+
+/* ---------- toast / drop ---------- */
+.toasts{position:fixed;right:18px;bottom:44px;z-index:30;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.toast{max-width:380px;padding:11px 14px;border-radius:var(--radius);border:1px solid var(--line2);background:linear-gradient(180deg,#20242b,#171a1f);
+  box-shadow:0 12px 30px rgba(0,0,0,.5);display:flex;gap:10px;align-items:flex-start;animation:slide .2s ease-out}
+.toast svg{width:16px;height:16px;flex:none;margin-top:1px}
+.toast.ok{border-left:3px solid var(--green)} .toast.ok svg{color:var(--green)}
+.toast.err{border-left:3px solid var(--red)} .toast.err svg{color:var(--red)}
+.toast.warn{border-left:3px solid var(--gold)} .toast.warn svg{color:var(--gold)}
+.bk.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%,30%{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 22px rgba(201,164,90,.35)}}
+.toast small{display:block;color:var(--muted);margin-top:2px;font-size:11.5px}
+.drop{position:fixed;inset:10px;z-index:40;border:2px dashed var(--gold);border-radius:6px;background:rgba(12,10,6,.85);
+  display:none;place-items:center;font:600 15px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--gold);pointer-events:none}
+.drop.on{display:grid}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(8px) scale(.98)}}
+@keyframes slide{from{opacity:0;transform:translateX(16px)}}
+.spin{animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <linearGradient id="bm" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1f3a22"/><stop offset=".5" stop-color="#15171b"/><stop offset="1" stop-color="#3d1a15"/></linearGradient>
+          <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2e2bd"/><stop offset="1" stop-color="#b48a3c"/></linearGradient>
+          <clipPath id="bc"><rect x="3" y="3" width="24" height="24" rx="3"/></clipPath>
+        </defs>
+        <g clip-path="url(#bc)">
+          <rect x="3" y="3" width="24" height="24" fill="url(#bm)"/>
+          <path d="M3 6c7 5 13 11 18 21" stroke="#3a7fb8" stroke-width="2" fill="none" stroke-opacity=".85"/>
+          <path d="M6 24V6h18M6 24h18V6M7 23 23 7" stroke="#c9a45a" stroke-opacity=".6" stroke-width="1" fill="none"/>
+        </g>
+        <rect x="3" y="3" width="24" height="24" rx="3" fill="none" stroke="url(#bg2)" stroke-width="1.4"/>
+        <circle cx="7" cy="23" r="2.8" fill="#5fae46" stroke="#0b0d10" stroke-width=".8"/>
+        <circle cx="23" cy="7" r="2.8" fill="#d2412c" stroke="#0b0d10" stroke-width=".8"/>
+        <circle cx="25" cy="25" r="6" fill="#0b0d10"/>
+        <circle cx="25" cy="25" r="5" fill="url(#bg2)"/>
+        <path d="M25 22.2v4.6m0 0-1.9-1.9m1.9 1.9 1.9-1.9" stroke="#1a1208" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <b id="appName">Toxic Dota Save</b>
+    </div>
+    <div class="status" id="status"><span class="dot"></span><span>…</span></div>
+    <div class="spacer"></div>
+    <div class="help">
+      <button class="hbtn" aria-describedby="helpPop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.01"/></svg><span data-i="howTo"></span></button>
+      <div class="pop" id="helpPop" role="tooltip"><b data-i="howTo"></b><ol id="helpList"></ol></div>
+    </div>
+    <button class="hbtn" id="importBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg><span data-i="import"></span></button>
+    <button class="hbtn" id="folderBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6.5h6l2 2.5h10v9.5H3z"/></svg><span data-i="folder"></span></button>
+    <div class="lang"><button data-lang="tr">TR</button><button data-lang="en">EN</button></div>
+  </header>
+
+  <main id="main"></main>
+
+  <footer>
+    <span class="credit" id="credit"></span>
+    <span class="spacer"></span>
+    <span data-i="disclaimer"></span>
+    <span id="ver"></span>
+  </footer>
+</div>
+<div class="toasts" id="toasts"></div>
+<div class="drop" id="drop"><span data-i="dropHere"></span></div>
+<input type="file" id="file" accept=".zip,application/zip" hidden>
+
+<script>
+"use strict";
+const I18N = {
+  tr:{
+    howTo:"Nasıl kullanılır?",
+    help:[
+      "Soldan hesabını seç.",
+      "\"Yedekle\" ile ayarlarını kaydet.",
+      "Yedekte \"Yükle\"ye bas, hedef hesabı seç.",
+      "Yüklemeden önce Dota'yı kapat.",
+      "Eski ayarlar otomatik yedeklenir.",
+      "Paylaşmak için .zip'i gönder, \"İçe aktar\" ile ekle."
+    ],
+    import:"İçe aktar", folder:"Yedek klasörü", accounts:"Hesaplar", backups:"Yedekler",
+    disclaimer:"Valve ile bağlantılı değildir.",
+    steamLive:n=>`Steam açık · ${n}`, steamOff:"Steam kapalı", steamNone:"Steam bulunamadı",
+    live:"Aktif", recent:"Son giriş", noDota:"Dota ayarı yok",
+    backupBtn:"Yedekle", notePh:"Not (isteğe bağlı) — ör. Ana ayarlarım",
+    noDotaHint:"Bu hesapta henüz Dota 2 ayarı yok. Yedek yükleyebilirsin.",
+    tabAll:"Tümü", tabMine:"Bu hesap", tabAuto:"Otomatik",
+    load:"Yükle", reveal:"Klasörde göster", del:"Sil",
+    autoTag:"Otomatik", mineTag:"Bu hesap",
+    autoTitle:"Yükleme öncesi otomatik yedek",
+    files:n=>`${n} dosya`, from:"Kaynak",
+    emptyT:"Henüz yedek yok", emptyD:"Ayarlarını bir kez yedekle, istediğin hesaba tek tıkla yükle.",
+    emptyFilter:"Bu filtrede yedek yok.",
+    dotaRunning:"Dota 2 açık. Yükleme yapmak için önce oyunu kapat — yedek almak serbest.",
+    restoreT:"Ayarları yükle", restoreTo:"Hedef hesap", restoreBackup:"Yedek",
+    restoreSafe:"Hedef hesabın mevcut ayarları önce otomatik yedeklenir. Yanlış yükleme geri alınabilir.",
+    restoreGo:"Yükle", cancel:"Vazgeç",
+    deleteT:"Yedeği sil", deleteQ:n=>`"${n}" kalıcı olarak silinsin mi?`, deleteGo:"Sil",
+    savedT:"Yedek alındı", restoredT:"Ayarlar yüklendi",
+    restoredD:n=>`${n} hesabına yüklendi. Dota'yı açtığında Steam bulut çakışması sorarsa "Yerel dosyalar"ı seç.`,
+    importedT:"Yedek içe aktarıldı", deletedT:"Yedek silindi",
+    dupT:"Bu ayarlar zaten yedekli", dupD:(n,a)=>`Aynısı "${n}" adıyla ${a} kaydedilmiş. Ayarlarını değiştirdiğinde yeni yedek alabilirsin.`,
+    dropHere:"Yedek dosyasını bırak",
+    noSteamT:"Steam bulunamadı", noSteamD:"Bu bilgisayarda Steam kurulu görünmüyor. Steam'i kurup en az bir kez giriş yap, sonra uygulamayı yeniden aç.",
+    noAccT:"Hesap bulunamadı", noAccD:"Steam'e en az bir kez giriş yap ve Dota 2'yi bir kez aç.",
+    retry:"Yenile",
+    err:{
+      dota_running:"Dota 2 açıkken yükleme yapılamaz. Oyunu kapatıp tekrar dene.",
+      no_dota_settings:"Bu hesapta yedeklenecek Dota 2 ayarı yok.",
+      invalid_backup:"Bu dosya geçerli bir yedek değil.",
+      account_not_found:"Hesap bulunamadı. Listeyi yenile.",
+      steam_not_found:"Steam bulunamadı.",
+      generic:"Bir şeyler ters gitti."
+    },
+    ago:"önce"
+  },
+  en:{
+    howTo:"How to use",
+    help:[
+      "Pick your account on the left.",
+      "Hit \"Back up\" to save your settings.",
+      "Hit \"Load\" on a backup, pick the target.",
+      "Close Dota before loading.",
+      "Old settings are backed up automatically.",
+      "To share, send the .zip; add it with \"Import\"."
+    ],
+    import:"Import", folder:"Backup folder", accounts:"Accounts", backups:"Backups",
+    disclaimer:"Not affiliated with Valve.",
+    steamLive:n=>`Steam online · ${n}`, steamOff:"Steam closed", steamNone:"Steam not found",
+    live:"Active", recent:"Last login", noDota:"No Dota settings",
+    backupBtn:"Back up", notePh:"Note (optional) — e.g. Main settings",
+    noDotaHint:"No Dota 2 settings on this account yet. You can still load a backup.",
+    tabAll:"All", tabMine:"This account", tabAuto:"Auto",
+    load:"Load", reveal:"Show in folder", del:"Delete",
+    autoTag:"Auto", mineTag:"This account",
+    autoTitle:"Automatic pre-load backup",
+    files:n=>`${n} files`, from:"From",
+    emptyT:"No backups yet", emptyD:"Back up your settings once, load them onto any account in one click.",
+    emptyFilter:"No backups match this filter.",
+    dotaRunning:"Dota 2 is running. Close the game before loading — backing up is fine.",
+    restoreT:"Load settings", restoreTo:"Target account", restoreBackup:"Backup",
+    restoreSafe:"The target's current settings are backed up automatically first, so a wrong load can be undone.",
+    restoreGo:"Load", cancel:"Cancel",
+    deleteT:"Delete backup", deleteQ:n=>`Permanently delete "${n}"?`, deleteGo:"Delete",
+    savedT:"Backup saved", restoredT:"Settings loaded",
+    restoredD:n=>`Loaded onto ${n}. If Steam shows a cloud sync conflict when Dota starts, pick "Local files".`,
+    importedT:"Backup imported", deletedT:"Backup deleted",
+    dupT:"These settings are already backed up", dupD:(n,a)=>`An identical copy was saved as "${n}" ${a}. Change your settings to make a new backup.`,
+    dropHere:"Drop the backup file",
+    noSteamT:"Steam not found", noSteamD:"Steam doesn't seem to be installed. Install it, log in at least once, then reopen the app.",
+    noAccT:"No accounts found", noAccD:"Log in to Steam at least once and start Dota 2 once.",
+    retry:"Refresh",
+    err:{
+      dota_running:"Can't load while Dota 2 is running. Close the game and try again.",
+      no_dota_settings:"This account has no Dota 2 settings to back up.",
+      invalid_backup:"That file isn't a valid backup.",
+      account_not_found:"Account not found. Refresh the list.",
+      steam_not_found:"Steam not found.",
+      generic:"Something went wrong."
+    },
+    ago:"ago"
+  }
+};
+
+const ICON = {
+  save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M4 19h16"/></svg>',
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h12m0 0-5-5m5 5-5 5"/></svg>',
+  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6.5h6l2 2.5h10v9.5H3z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20zM12 10v4m0 3v.01"/></svg>',
+  ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>',
+  spin:'<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>'
+};
+
+const S = { state:null, backups:[], sel:null, filter:"all", lang:"tr", busy:false };
+const $ = id => document.getElementById(id);
+const t = (k,...a) => { const v = I18N[S.lang][k]; return typeof v === "function" ? v(...a) : (v ?? k); };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function call(name, ...args){
+  const payload = JSON.stringify(args.map(String));
+  if (window.__call) return window.__call(name, payload);
+  const r = await fetch("/api", {method:"POST", body:JSON.stringify({name, args:payload})});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error);
+  return j.result;
+}
+function errMsg(e){
+  const code = String(e?.message ?? e);
+  return I18N[S.lang].err[code] || (code.length < 140 ? code : t("err").generic);
+}
+
+const HUES = [8, 28, 200, 140, 260, 330, 45, 180];
+function avatar(a, cls=""){
+  if (a.avatar) return `<div class="av ${cls}" style="background-image:url('${a.avatar}')">${a.active?'<span class="live"></span>':""}</div>`;
+  const h = HUES[(parseInt(a.accountId,10)||0) % HUES.length];
+  const ch = esc([...(a.personaName||"?")][0].toUpperCase());
+  return `<div class="av ${cls}" style="background:linear-gradient(135deg,hsl(${h} 45% 38%),hsl(${h} 50% 20%))">${ch}${a.active?'<span class="live"></span>':""}</div>`;
+}
+function accTag(a){
+  if (a.active) return `<span class="tag live">${t("live")}</span>`;
+  if (!S.state.steamRunning && a.accountId === S.state.activeAccount) return `<span class="tag recent">${t("recent")}</span>`;
+  if (!a.hasDota) return `<span class="tag none">${t("noDota")}</span>`;
+  return "";
+}
+function ago(iso){
+  const d = (new Date(iso) - Date.now())/1000;
+  const rtf = new Intl.RelativeTimeFormat(S.lang, {numeric:"auto"});
+  const steps = [[60,"second"],[3600,"minute",60],[86400,"hour",3600],[604800,"day",86400],[2629800,"week",604800],[31557600,"month",2629800],[Infinity,"year",31557600]];
+  for (const [lim,unit,div=1] of steps) if (Math.abs(d) < lim) return rtf.format(Math.round(d/div), unit);
+}
+function fullDate(iso){ return new Date(iso).toLocaleString(S.lang, {dateStyle:"medium", timeStyle:"short"}); }
+const accById = id => S.state.accounts.find(a => a.accountId === id);
+const backupTitle = b => b.label || (b.auto ? t("autoTitle") : b.personaName);
+
+/* ---------- render ---------- */
+function applyI18n(){
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll("[data-i]").forEach(el => el.textContent = t(el.dataset.i));
+  document.querySelectorAll("[data-lang]").forEach(b => b.classList.toggle("on", b.dataset.lang === S.lang));
+  $("helpList").innerHTML = I18N[S.lang].help.map(x => `<li>${esc(x)}</li>`).join("");
+}
+
+function renderStatus(){
+  const st = S.state, el = $("status");
+  if (!st.steamFound){ el.innerHTML = `<span class="dot warn"></span><span>${t("steamNone")}</span>`; return; }
+  const a = accById(st.activeAccount);
+  el.innerHTML = st.steamRunning && a
+    ? `<span class="dot on"></span><span>${esc(t("steamLive", a.personaName))}</span>`
+    : `<span class="dot"></span><span>${t("steamOff")}</span>`;
+}
+
+function render(){
+  applyI18n();
+  const st = S.state;
+  $("appName").textContent = st.appName;
+  document.title = st.appName;
+  $("ver").textContent = "v" + st.appVersion;
+  const cr = $("credit");
+  cr.innerHTML = esc(st.credit);
+  cr.classList.toggle("link", !!st.creditUrl);
+  renderStatus();
+
+  const main = $("main");
+  if (!st.steamFound || !st.accounts.length){
+    const k = st.steamFound ? "noAcc" : "noSteam";
+    main.style.display = "block";
+    main.innerHTML = `<div class="fatal"><div>${ICON.box}<h2>${t(k+"T")}</h2><p>${t(k+"D")}</p>
+      <button class="ghost" style="margin-top:18px" onclick="refresh()">${t("retry")}</button></div></div>`;
+    main.querySelector(".fatal svg").style.cssText = "width:46px;height:46px;color:var(--dim)";
+    return;
+  }
+  main.style.display = "";
+  if (!accById(S.sel)) S.sel = st.activeAccount && accById(st.activeAccount) ? st.activeAccount : st.accounts[0].accountId;
+  const sel = accById(S.sel);
+  const counts = {};
+  S.backups.forEach(b => counts[b.accountId] = (counts[b.accountId]||0) + 1);
+
+  const accs = st.accounts.map(a => `
+    <button class="acc ${a.accountId===S.sel?"sel":""}" data-acc="${esc(a.accountId)}">
+      ${avatar(a)}
+      <div class="meta"><div class="name">${esc(a.personaName)}</div>
+        <div class="sub"><span class="n">${a.accountName?esc(a.accountName):"#"+esc(a.accountId)}</span>${accTag(a)}</div></div>
+      <span class="count">${counts[a.accountId]||""}</span>
+    </button>`).join("");
+
+  const list = S.backups.filter(b =>
+    S.filter === "all" ? true : S.filter === "auto" ? b.auto : b.accountId === S.sel);
+
+  const rows = list.length ? list.map(b => `
+    <div class="bk ${b.auto?"auto":""}" data-id="${esc(b.id)}">
+      <div class="stripe"></div>
+      <div class="info">
+        <div class="t"><span>${esc(backupTitle(b))}</span>
+          ${b.auto?`<span class="tag auto">${t("autoTag")}</span>`:""}
+          ${b.accountId===S.sel && S.filter!=="mine"?`<span class="tag mine">${t("mineTag")}</span>`:""}</div>
+        <div class="s" title="${esc(fullDate(b.createdAt))}"><b>${esc(b.personaName)}</b> · ${esc(ago(b.createdAt))} · ${t("files", b.fileCount)}</div>
+      </div>
+      <div class="ops">
+        <button class="ibtn" data-reveal="${esc(b.id)}" title="${t("reveal")}">${ICON.folder}</button>
+        <button class="ibtn del" data-del="${esc(b.id)}" title="${t("del")}">${ICON.trash}</button>
+        <button class="load" data-load="${esc(b.id)}" ${st.dotaRunning?"disabled":""}>${ICON.up}${t("load")}</button>
+      </div>
+    </div>`).join("")
+    : `<div class="empty">${ICON.box}${S.backups.length ? t("emptyFilter") : `<b>${t("emptyT")}</b>${t("emptyD")}`}</div>`;
+
+  const noteVal = $("note")?.value ?? "";
+  main.innerHTML = `
+    <aside>
+      <div class="sect"><span class="label">${t("accounts")}<i>${st.accounts.length}</i></span></div>
+      <div class="accounts">${accs}</div>
+    </aside>
+    <section class="content">
+      ${st.dotaRunning?`<div class="banner">${ICON.warn}<span>${t("dotaRunning")}</span></div>`:""}
+      <div class="hero">
+        ${avatar(sel,"lg")}
+        <div class="who">
+          <h1>${esc(sel.personaName)}</h1>
+          <div class="sub">${sel.accountName?esc(sel.accountName)+" · ":""}ID ${esc(sel.accountId)} ${accTag(sel)}</div>
+          ${sel.hasDota?"":`<div class="hint" style="margin-top:8px">${t("noDotaHint")}</div>`}
+        </div>
+        <div class="act">
+          <input class="note" id="note" maxlength="60" placeholder="${esc(t("notePh"))}" ${sel.hasDota?"":"disabled"}>
+          <button class="play" id="backupBtn" ${sel.hasDota&&!S.busy?"":"disabled"}>${S.busy?ICON.spin:ICON.save}${t("backupBtn")}</button>
+        </div>
+      </div>
+      <div>
+        <div class="bar" style="margin-bottom:10px">
+          <span class="label">${t("backups")}<i>${S.backups.length}</i></span>
+          <div class="tabs">
+            ${["all","mine","auto"].map(f=>`<button data-filter="${f}" class="${S.filter===f?"on":""}">${t("tab"+f[0].toUpperCase()+f.slice(1))}</button>`).join("")}
+          </div>
+        </div>
+        <div class="list">${rows}</div>
+      </div>
+    </section>`;
+  $("note").value = noteVal;
+}
+
+/* ---------- modal ---------- */
+function modal(title, body, okLabel, okClass, onOk){
+  const sc = document.createElement("div");
+  sc.className = "scrim";
+  sc.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="mh">${title}</div><div class="mb">${body}</div>
+    <div class="mf"><button class="ghost" data-x>${t("cancel")}</button><button class="play ${okClass}" data-ok>${okLabel}</button></div></div>`;
+  const close = () => { sc.remove(); document.removeEventListener("keydown", key); };
+  const key = e => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", key);
+  sc.addEventListener("click", e => { if (e.target === sc || e.target.closest("[data-x]")) close(); });
+  sc.querySelector("[data-ok]").addEventListener("click", async e => {
+    const b = e.currentTarget; b.disabled = true; b.innerHTML = ICON.spin + okLabel;
+    try { await onOk(sc); close(); } catch(err){ toast("err", errMsg(err)); b.disabled = false; b.innerHTML = okLabel; }
+  });
+  document.body.appendChild(sc);
+  sc.querySelector("[data-ok]").focus();
+  return sc;
+}
+
+function openRestore(id){
+  const b = S.backups.find(x => x.id === id);
+  let target = S.sel;
+  const targets = () => S.state.accounts.map(a => `
+    <button class="acc ${a.accountId===target?"sel":""}" data-target="${esc(a.accountId)}">
+      ${avatar(a)}<div class="meta"><div class="name">${esc(a.personaName)}</div>
+      <div class="sub"><span class="n">${a.accountName?esc(a.accountName):"#"+esc(a.accountId)}</span>${accTag(a)}</div></div></button>`).join("");
+  const sc = modal(t("restoreT"), `
+    <div class="flow">
+      <div class="box"><small>${t("restoreBackup")}</small><div>${esc(backupTitle(b))}</div></div>
+      ${ICON.up}
+      <div class="box"><small>${t("restoreTo")}</small><div id="tname">${esc(accById(target).personaName)}</div></div>
+    </div>
+    <div><div class="label" style="margin-bottom:6px">${t("restoreTo")}</div><div class="targets">${targets()}</div></div>
+    <div class="safe">${ICON.shield}<span>${t("restoreSafe")}</span></div>`,
+    t("restoreGo"), "", async () => {
+      await call("restoreBackup", id, target);
+      toast("ok", t("restoredT"), t("restoredD", accById(target).personaName));
+      S.sel = target;
+      await refresh();
+    });
+  sc.querySelector(".targets").addEventListener("click", e => {
+    const el = e.target.closest("[data-target]"); if (!el) return;
+    target = el.dataset.target;
+    const box = sc.querySelector(".targets"), top = box.scrollTop;
+    box.innerHTML = targets();
+    box.scrollTop = top;
+    sc.querySelector("#tname").textContent = accById(target).personaName;
+  });
+}
+
+function openDelete(id){
+  const b = S.backups.find(x => x.id === id);
+  modal(t("deleteT"), `<p>${esc(t("deleteQ", backupTitle(b)))}</p><p class="hint">${esc(b.personaName)} · ${esc(fullDate(b.createdAt))}</p>`,
+    t("deleteGo"), "red", async () => {
+      await call("deleteBackup", id);
+      toast("ok", t("deletedT"));
+      await refreshBackups();
+    });
+}
+
+/* ---------- toast ---------- */
+function toast(kind, title, sub){
+  const el = document.createElement("div");
+  el.className = "toast " + kind;
+  el.innerHTML = `${kind==="ok"?ICON.ok:ICON.warn}<div>${esc(title)}${sub?`<small>${esc(sub)}</small>`:""}</div>`;
+  $("toasts").appendChild(el);
+  setTimeout(() => { el.style.transition = "opacity .3s"; el.style.opacity = "0"; setTimeout(() => el.remove(), 300); }, sub ? 7000 : 3500);
+}
+
+/* ---------- actions ---------- */
+// Point at the existing identical backup instead of creating another copy.
+function showDuplicate(b){
+  toast("warn", t("dupT"), t("dupD", backupTitle(b), ago(b.createdAt)));
+  if (!(S.filter === "all" || (S.filter === "auto" && b.auto) || (S.filter === "mine" && b.accountId === S.sel))) S.filter = "all";
+  render();
+  const row = document.querySelector(`.bk[data-id="${CSS.escape(b.id)}"]`);
+  if (row){ row.scrollIntoView({block:"nearest", behavior:"smooth"}); row.classList.add("flash"); }
+}
+
+async function refreshBackups(){ S.backups = await call("listBackups"); render(); }
+async function refresh(){
+  const [st, bk] = await Promise.all([call("getState"), call("listBackups")]);
+  S.state = st; S.backups = bk;
+  render();
+}
+
+async function doBackup(){
+  if (S.busy) return;
+  S.busy = true; render();
+  try {
+    const r = await call("createBackup", S.sel, $("note").value);
+    if (r.duplicateOf){ S.busy = false; return showDuplicate(r.duplicateOf); }
+    $("note").value = "";
+    toast("ok", t("savedT"), backupTitle(r.backup));
+    S.backups = await call("listBackups");
+  } catch(e){ toast("err", errMsg(e)); }
+  S.busy = false; render();
+}
+
+async function importFile(file){
+  if (!file) return;
+  try {
+    const data = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(",")[1] || "");
+      r.onerror = () => rej(r.error);
+      r.readAsDataURL(file);
+    });
+    const r = await call("importBackup", data);
+    if (r.duplicateOf) return showDuplicate(r.duplicateOf);
+    toast("ok", t("importedT"), backupTitle(r.backup));
+    S.filter = "all";
+    await refreshBackups();
+  } catch(e){ toast("err", errMsg(e)); }
+}
+
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-acc],[data-filter],[data-load],[data-del],[data-reveal],[data-lang],#backupBtn");
+  if (!el || el.closest(".modal")) return;
+  if (el.dataset.acc){ S.sel = el.dataset.acc; render(); }
+  else if (el.dataset.filter){ S.filter = el.dataset.filter; render(); }
+  else if (el.dataset.load){ openRestore(el.dataset.load); }
+  else if (el.dataset.del){ openDelete(el.dataset.del); }
+  else if (el.dataset.reveal){ call("revealBackup", el.dataset.reveal).catch(err => toast("err", errMsg(err))); }
+  else if (el.dataset.lang){ S.lang = el.dataset.lang; call("setLang", S.lang).catch(()=>{}); render(); }
+  else if (el.id === "backupBtn"){ doBackup(); }
+});
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "note") doBackup(); });
+$("importBtn").onclick = () => $("file").click();
+$("file").onchange = e => { importFile(e.target.files[0]); e.target.value = ""; };
+$("folderBtn").onclick = () => call("openBackupsDir").catch(err => toast("err", errMsg(err)));
+$("credit").onclick = () => S.state?.creditUrl && call("openCredit");
+
+/* drag & drop import */
+let dragDepth = 0;
+const isFileDrag = e => [...(e.dataTransfer?.types||[])].includes("Files");
+addEventListener("dragenter", e => { if (!isFileDrag(e)) return; e.preventDefault(); dragDepth++; $("drop").classList.add("on"); });
+addEventListener("dragleave", e => { if (!isFileDrag(e)) return; if (--dragDepth <= 0){ dragDepth = 0; $("drop").classList.remove("on"); } });
+addEventListener("dragover", e => e.preventDefault());
+addEventListener("drop", e => { e.preventDefault(); dragDepth = 0; $("drop").classList.remove("on"); importFile(e.dataTransfer.files[0]); });
+
+/* poll Steam / Dota status */
+async function poll(){
+  if (!S.state) return;
+  try {
+    const s = await call("getStatus");
+    const active = s.activeAccount || "";
+    const wasActive = S.state.steamRunning ? S.state.activeAccount : "";
+    if (active !== wasActive) return refresh(); // account switched / Steam closed
+    if (s.dotaRunning !== S.state.dotaRunning){ S.state.dotaRunning = s.dotaRunning; render(); }
+  } catch {}
+}
+
+(async () => {
+  try {
+    await refresh();
+    S.lang = S.state.settings.lang || ((navigator.language||"").toLowerCase().startsWith("tr") ? "tr" : "en");
+    render();
+  } catch(e){ toast("err", errMsg(e)); }
+  setInterval(poll, 2500);
+})();
+</script>
+</body>
+</html>

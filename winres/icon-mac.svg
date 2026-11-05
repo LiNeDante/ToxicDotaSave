@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs>
+<linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262a31"/><stop offset="1" stop-color="#0b0d10"/></linearGradient>
+<linearGradient id="map" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#16251a"/><stop offset=".5" stop-color="#141619"/><stop offset="1" stop-color="#2a1513"/></linearGradient>
+<radialGradient id="rad" cx="0" cy="1" r=".75"><stop offset="0" stop-color="#5fae46" stop-opacity=".35"/><stop offset="1" stop-color="#5fae46" stop-opacity="0"/></radialGradient>
+<radialGradient id="dire" cx="1" cy="0" r=".75"><stop offset="0" stop-color="#d2412c" stop-opacity=".4"/><stop offset="1" stop-color="#d2412c" stop-opacity="0"/></radialGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2e2bd"/><stop offset="1" stop-color="#b48a3c"/></linearGradient>
+<clipPath id="mc"><rect x="232" y="232" width="560" height="560" rx="46"/></clipPath>
+</defs>
+<rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/>
+<rect x="101.5" y="101.5" width="821" height="821" rx="184" fill="none" stroke="#c9a45a" stroke-opacity=".35" stroke-width="3"/>
+<g clip-path="url(#mc)">
+  <rect x="232" y="232" width="560" height="560" fill="url(#map)"/>
+  <rect x="232" y="232" width="560" height="560" fill="url(#rad)"/>
+  <rect x="232" y="232" width="560" height="560" fill="url(#dire)"/>
+  <!-- river -->
+  <path d="M232 300 C 400 420, 560 560, 724 792" stroke="#3a7fb8" stroke-opacity=".75" stroke-width="34" fill="none" stroke-linecap="round"/>
+  <!-- lanes -->
+  <g stroke="#c9a45a" stroke-opacity=".55" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M300 720 L300 300 L724 300"/>
+    <path d="M300 724 L724 724 L724 300"/>
+    <path d="M318 706 L706 318"/>
+  </g>
+</g>
+<rect x="232" y="232" width="560" height="560" rx="46" fill="none" stroke="url(#gold)" stroke-width="14"/>
+<!-- bases -->
+<circle cx="318" cy="706" r="58" fill="#4d9638" stroke="#0b0d10" stroke-width="12"/>
+<circle cx="318" cy="706" r="24" fill="#c9f0b8"/>
+<circle cx="706" cy="318" r="58" fill="#c2392a" stroke="#0b0d10" stroke-width="12"/>
+<circle cx="706" cy="318" r="24" fill="#ffd2c6"/>
+<!-- save badge -->
+<circle cx="770" cy="770" r="118" fill="#0b0d10"/>
+<circle cx="770" cy="770" r="100" fill="url(#gold)"/>
+<path d="M770 718v86m0 0-34-34m34 34 34-34M726 834h88" stroke="#1a1208" stroke-width="20" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

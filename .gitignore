@@ -1,0 +1,5 @@
+dist/
+dev/steam/
+.playwright-mcp/
+dev/data/
+rsrc_windows_amd64.syso
